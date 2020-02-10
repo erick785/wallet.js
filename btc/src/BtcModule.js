@@ -83,11 +83,11 @@ export default class BtcModule {
         return txb.build().toHex();
     }
 
-    multiSignTransaction() {}
+    // multiSignTransaction() {}
 
-    genSingleTransactionAndSign() {}
+    // genSingleTransactionAndSign() {}
 
-    genSingleTransactionAndMultiSign() {}
+    // genSingleTransactionAndMultiSign() {}
 }
 
 export function Btc() {
