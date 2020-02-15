@@ -7,7 +7,7 @@ describe('genAccount', () => {
         eth = new functions.Eth();
     });
 
-    it('generate account', () => {
+    it('generate eth account', () => {
         const {mnemonic, path, privateKey, address} = eth.genAccount();
 
         console.log('mnemonic--->', mnemonic);

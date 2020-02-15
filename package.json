@@ -64,9 +64,12 @@
         "dist"
     ],
     "dependencies": {
+        "bchaddrjs": "^0.4.5",
         "bip32": "^2.0.5",
         "bip39": "^3.0.2",
         "bitcoinjs-lib": "^5.1.7",
+        "bitcore-lib-cash": "^8.16.0",
+        "coininfo": "^5.1.0",
         "ethereumjs-abi": "^0.6.8",
         "ethereumjs-tx": "^2.1.2",
         "ethereumjs-util": "^6.2.0",

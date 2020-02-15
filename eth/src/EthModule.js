@@ -160,8 +160,6 @@ export default class EthMethod {
         if (validationResult !== '') {
             throw new Error(`TransactionSigner Error: ${validationResult}`);
         }
-        const r = ethTx.toJSON();
-        console.log('--ethtx-->', r);
 
         const rlpEncoded = ethTx.serialize().toString('hex');
         const rawTransaction = '0x' + rlpEncoded;
