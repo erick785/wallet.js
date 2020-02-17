@@ -64,13 +64,13 @@ export default class EthMethod {
      *
      */
 
-    multiAccount(privateKey, txData, m, addrs) {
+    multiAccountTx(privateKey, txData, m, addrs) {
         const data = abi.rawEncode(['address[]', 'uint256'], [addrs, m]).toString('hex');
 
         txData.data = mutilBin + data;
 
-        const ethTx = this.tx(txData);
-        const {rawTransaction} = this.signTx(ethTx, privateKey);
+        const ethTx = this.genTransaction(txData);
+        const {rawTransaction} = this.signTransaction(ethTx, privateKey);
 
         const multiAddr = bufferToHex(generateAddress(ethTx.getSenderAddress(), ethTx.nonce));
 
@@ -83,12 +83,9 @@ export default class EthMethod {
     }
 
     /**
-     * Creates a new transaction from an object with its fields' values.
-     *
-     * @param  txdata - A transaction can be initialized with its rlp representation, an array containing
-     * the value of its fields in order, or an object containing them by name.
-     *
-     *
+     * @method genTransaction 创建以太坊交易
+     * @param {Object} txData 一个交易的基础内容
+     * @returns {Object} tx 返回交易
      * @example
      * ```js
      * const txData = {
@@ -98,54 +95,47 @@ export default class EthMethod {
      *   to: '0x0000000000000000000000000000000000000000',
      *   value: '0x00',
      *   data: '0x7f7465737432000000000000000000000000000000000000000000000000000000600057',
-     *   v: '0x1c',
-     *   r: '0x5e1d3a76fbf824220eafc8c79ad578ad2b67d01b0c2425eb1f1347e8f50882ab',
-     *   s: '0x5bd428537f05f9830e93792f90ea6a3e2d1ee84952dd96edbae9f658f831ab13'
      * };
      * ```
      */
-    tx(txdata) {
+    genTransaction(txdata) {
         const ethTx = new tx.Transaction(txdata, this.options);
         return ethTx;
     }
 
     /**
-     * Creates a new transaction from an object with its fields' values.
+     * @method getErc20Transaction 创建以太坊erc20交易
+     * @param {Object} txData 一个交易的基础内容
+     * @param {String} to 代币收款人地址
+     * @param {String} value 代币转账金额
      *
-     * @param  txdata - A transaction can be initialized with its rlp representation, an array containing
-     * the value of its fields in order, or an object containing them by name.
-     *
-     *
+     * @returns {Object} tx 返回交易
      * @example
      * ```js
      * const txData = {
      *   nonce: '0x00',
      *   gasPrice: '0x09184e72a000',
      *   gasLimit: '0x2710',
-     *   to: '0x0000000000000000000000000000000000000000',
      *   value: '0x00',
      *   data: '0x7f7465737432000000000000000000000000000000000000000000000000000000600057',
-     *   v: '0x1c',
-     *   r: '0x5e1d3a76fbf824220eafc8c79ad578ad2b67d01b0c2425eb1f1347e8f50882ab',
-     *   s: '0x5bd428537f05f9830e93792f90ea6a3e2d1ee84952dd96edbae9f658f831ab13'
      * };
      * ```
      */
-    erc20Tx(txdata, to, value) {
+    getErc20Transaction(txdata, to, value) {
         txdata.data = '0x' + this.getContractPayload('transfer', ['address', 'uint256'], [to, value]);
-        const ethTx = this.tx(txdata);
+        const ethTx = this.genTransaction(txdata);
         return ethTx;
     }
 
     /**
-     * Signs the transaction
-     *
-     * @param {Object} transaction
-     * @param {String} privateKey
-     *
+     * @method signTransaction 以太坊交易
+     * @param {Object} tx 交易结构
+     * @param {String}  privateKey 私钥
      * @returns {Promise<{rawTransaction,transactionHash}>}
-     */
-    signTx(ethTx, privateKey) {
+     * rawTransaction ===>交易序列化后的结果
+     * transactionHash ===> 交易hash
+     * */
+    signTransaction(ethTx, privateKey) {
         if (!privateKey) {
             throw new Error('No privateKey given to the TransactionSigner.');
         }
@@ -172,20 +162,18 @@ export default class EthMethod {
     }
 
     /**
-     * 对支付进行多重签名
+     * @method genMultiSignTx 对支付进行多重签名
      * @param {String} to 收款地址
      * @param {Number} value 多种签名转账金额
      * @param {Number} multiNonce 多重签名地址支付Nonce
      * @param {String} multiAddr 收款地址
      * @param {Object} txData 一个交易的基础内容
      * @param {Array} privateKeys
-     *
      * @returns {Object} transaction 多重签名后的交易
      */
-
     genMultiSignTx(to, value, multiNonce, multiAddr, txData, privateKeys) {
         txData.to = multiAddr;
-        const ethTx = this.tx(txData);
+        const ethTx = this.genTransaction(txData);
 
         const message = abi.rawEncode(['uint256', 'address', 'uint256', 'address'], [multiNonce, multiAddr, value, to]);
 
@@ -229,19 +217,19 @@ export default class EthMethod {
     }
 
     /**
-     * 对erc20支付进行多重签名
-     * @param {string} to 收款地址
+     * @method genERC20MultiSignTx 对erc20支付进行多重签名
+     * @param {String} to 收款地址
      * @param {Number} multiNonce 多重签名地址支付Nonce
-     * @param {string} multiAddress 收款地址
+     * @param {String} multiAddress 收款地址
+     * @param {String} tokenAddress erc20合约地址
      * @param {Object} txData 一个交易的基础内容
-     * @param {String} privateKey
-     *
+     * @param {Array} privateKeys
      * @returns {Object} transaction 多重签名后的交易
      */
 
     genERC20MultiSignTx(to, value, multiNonce, multiAddress, tokenAddress, txData, privateKeys) {
         txData.to = multiAddress;
-        const ethTx = this.tx(txData);
+        const ethTx = this.genTransaction(txData);
 
         const message = abi.rawEncode(
             ['uint256', 'address', 'uint256', 'address'],

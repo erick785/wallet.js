@@ -15,11 +15,19 @@ export default class BchModule extends BtcModule {
     }
 
     /**
-     * 根据公钥生成P2PKH地址, 支持压缩、非压缩公钥
+     * @method genAccount 根据公钥生成P2PKH地址, 支持压缩、非压缩公钥
      * @param {Number} strength 默认 128
-     * @param {String} path 分层确定性路径，默认使用BIP44路径 "m/44'/0'/2'/0/0"
-     *
+     * 熵128 ==> 助记词12个单词
+     * 熵160 ==> 助记词15个单词
+     * 熵192 ==> 助记词18个单词
+     * 熵224 ==> 助记词21个单词
+     * 熵256 ==> 助记词24个单词
+     * @param {String} path 分层确定性路径，默认使用BIP44路径 "m/44'/0'/145'/0/0'/0/0"
      * @returns {Promise<{mnemonic, path, wif, address}>}
+     * mnemonic 助记词
+     * path 路径
+     * wif 秘钥
+     * address 地址
      */
     genAccount(strength, path) {
         strength = strength || 128;
@@ -36,6 +44,15 @@ export default class BchModule extends BtcModule {
         return {mnemonic, path, wif, address};
     }
 
+    /**
+     * @method genMultiAddress 生成多签地址和脚本
+     * @param {Number} m 可支配者个数
+     * @param {Number} n 所有者个数
+     * @param {Array} wifs 所有者私钥列表
+     * @returns {Promise<{address, redeemscript}>}
+     * address===>多签地址
+     * redeemscript====>redeem脚本 多重签名地址的赎回脚本
+     * */
     genMultiAddress(m, n, wifs) {
         let pubKeys = [];
 
@@ -48,6 +65,13 @@ export default class BchModule extends BtcModule {
         return {address, redeemscript, pubKeys};
     }
 
+    /**
+     * @method genTransactionAndSign 构建bch交易并签名
+     * @param {Array} ins inputs
+     * @param {Array} outs outputs
+     * @param {String} wif 私钥
+     * @returns {String} tx hex
+     * */
     genTransactionAndSign(ins, outs, wif) {
         let utxos = [];
         let tos = [];
@@ -77,6 +101,15 @@ export default class BchModule extends BtcModule {
         return transaction.uncheckedSerialize();
     }
 
+    /**
+     * @method genTransactionAndSign 构建bch交易并签名
+     * @param {Array} ins inputs
+     * @param {Array} outs outputs
+     * @param {String} multiAddr 多签地址
+     * @param {Number} m 可支配者个数
+     * @param {Array} wifs 签名
+     * @returns {String} tx hex
+     * */
     genTransactionAndMultiSign(ins, outs, multiAddr, m, pubKeys, wifs) {
         let utxos = [];
         let tos = [];

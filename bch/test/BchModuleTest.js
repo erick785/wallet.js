@@ -35,7 +35,7 @@ describe('bch', () => {
         console.log('address--->', address);
     });
 
-    it('generate multi address', () => {
+    it('generate bch multi address', () => {
         const {address, redeemscript, pubKeys} = bch.genMultiAddress(m, n, wifs);
         // console.log('pubKeys--->', pubKeys);
         pubs = pubKeys;

@@ -1,7 +1,7 @@
 {
-    "name": "wallet",
-    "version": "1.0.0",
-    "description": "wallet JavaScript API",
+    "name": "txbuilderjs",
+    "version": "1.0.2",
+    "description": "generate tx JavaScript API",
     "main": "dist/index.cjs.js",
     "module": "dist/index.esm.js",
     "browser": "dist/index.umd.js",

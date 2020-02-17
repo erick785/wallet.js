@@ -8,11 +8,19 @@ export default class BtcModule {
     }
 
     /**
-     * 根据公钥生成P2PKH地址, 支持压缩、非压缩公钥
+     * @method genAccount 根据公钥生成P2PKH地址, 支持压缩、非压缩公钥
      * @param {Number} strength 默认 128
+     * 熵128 ==> 助记词12个单词
+     * 熵160 ==> 助记词15个单词
+     * 熵192 ==> 助记词18个单词
+     * 熵224 ==> 助记词21个单词
+     * 熵256 ==> 助记词24个单词
      * @param {String} path 分层确定性路径，默认使用BIP44路径 "m/44'/0'/0'/0/0"
-     *
      * @returns {Promise<{mnemonic, path, wif, address}>}
+     * mnemonic 助记词
+     * path 路径
+     * wif 秘钥
+     * address 地址
      */
 
     genAccount(strength, path) {
@@ -31,8 +39,13 @@ export default class BtcModule {
     }
 
     /**
-     *
-     *
+     * @method genMultiAddress 生成多签地址和脚本
+     * @param {Number} m 可支配者个数
+     * @param {Number} n 所有者个数
+     * @param {Array} wifs 所有者私钥列表
+     * @returns {Promise<{address, redeemscript}>}
+     * address===>多签地址
+     * redeemscript====>redeem脚本
      * */
 
     genMultiAddress(m, n, wifs, network) {
@@ -41,7 +54,7 @@ export default class BtcModule {
             return keyPair.publicKey;
         });
 
-        const pubKeyHexs = pubkeys.map((s) => s.toString('hex')); // 注意把string转换为Buffer
+        const pubKeyHexs = pubkeys.map((s) => s.toString('hex'));
 
         const {address} = bitcoin.payments.p2sh({
             redeem: bitcoin.payments.p2ms({m: m, pubkeys, network: network})
@@ -55,10 +68,11 @@ export default class BtcModule {
     }
 
     /**
-     *
-     *
+     * @method genTransaction 构建btc交易
+     * @param {Array} ins inputs
+     * @param {Array} outs outputs
+     * @returns {Object} tx
      * */
-
     genTransaction(ins, outs, network) {
         let txb = new bitcoin.TransactionBuilder(network);
         txb.setVersion(1);
@@ -72,7 +86,12 @@ export default class BtcModule {
         }
         return txb;
     }
-
+    /**
+     * @method signTransaction 对交易进行签名
+     * @param {Object} tx 函数genTransaction返回的tx
+     * @param {Array} keyPairs 私钥以及脚本
+     * @returns {String} tx hex string
+     * */
     signTransaction(txb, keyPairs, network) {
         for (let i = 0; i < keyPairs.length; i++) {
             let keyPair = bitcoin.ECPair.fromWIF(keyPairs[i].wif, network);
