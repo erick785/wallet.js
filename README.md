@@ -4,25 +4,24 @@
 
 ## Installation
 
-```
-npm install wallet
+```bash
+npm install txbuilderjs
 ```
 
 ## Test
 
-```
+```bash
 npm run test
 ```
 
 ## Usage
 
-```
+```js
 import * as tb from 'txbuilderjs';
 
 const builder = tb.Builder();
 
 const {mnemonic, path, wif, address} = builder.btc.genAccount();
-
 ```
 
 -   [BTC Interface](#BTC)
