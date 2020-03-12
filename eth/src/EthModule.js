@@ -13,6 +13,7 @@ export default class EthMethod {
     }
 
     /**
+     * @param {String} mnemonic 助记词如果这个参数不为空，就是通过助记词恢复账户
      * @param {Object} options
      * options.extraEntropy 额外的熵加入随机源
      * options.path 分层确定性路径，默认使用BIP44路径 "m/44'/60'/0'/0/0"
@@ -21,11 +22,17 @@ export default class EthMethod {
      *@returns {Promise<{mnemonic, path, privateKey, address}>}
      */
 
-    genAccount(options = {}) {
-        // 拿到生成的钱包信息
-        let wallet = ethers.Wallet.createRandom(options);
+    genAccount(mnemonic, options = {}) {
+        let wallet;
+        if (!mnemonic) {
+            // 拿到生成的钱包信息
+            wallet = ethers.Wallet.createRandom(options);
+        } else {
+            wallet = ethers.Wallet.fromMnemonic(mnemonic, options.path, options.locale);
+        }
+
         // 获取助记词
-        const mnemonic = wallet.mnemonic;
+        mnemonic = wallet.mnemonic;
 
         // 获取path
         const path = wallet.path;

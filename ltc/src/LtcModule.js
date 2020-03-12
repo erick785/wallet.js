@@ -14,6 +14,7 @@ export default class LtcModule extends BtcModule {
 
     /**
      * @method genAccount 根据公钥生成P2PKH地址, 支持压缩、非压缩公钥
+     * @param {String} mnemonic 助记词如果这个参数不为空，就是通过助记词恢复账户
      * @param {Number} strength 默认 128
      * 熵128 ==> 助记词12个单词
      * 熵160 ==> 助记词15个单词
@@ -27,11 +28,14 @@ export default class LtcModule extends BtcModule {
      * wif 秘钥
      * address 地址
      */
-    genAccount(strength, path) {
+    genAccount(mnemonic, strength, path) {
         strength = strength || 128;
         path = path || "m/44'/0'/2'/0/0";
 
-        const mnemonic = bip39.generateMnemonic(strength);
+        if (!mnemonic) {
+            mnemonic = bip39.generateMnemonic(strength);
+        }
+
         const seed = bip39.mnemonicToSeedSync(mnemonic);
         const root = bip32.fromSeed(seed);
         const child = root.derivePath(path);

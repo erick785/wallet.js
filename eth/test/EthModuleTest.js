@@ -14,6 +14,13 @@ describe('eth', () => {
         console.log('path--->', path);
         console.log('privateKey--->', privateKey);
         console.log('address--->', address);
+
+        // 根据助记词返回私钥
+        const result = eth.genAccount(mnemonic);
+        expect(mnemonic).toStrictEqual(result.mnemonic);
+        expect(path).toStrictEqual(result.path);
+        expect(privateKey).toStrictEqual(result.privateKey);
+        expect(address).toStrictEqual(result.address);
     });
 
     it('generate multi account transaction', () => {

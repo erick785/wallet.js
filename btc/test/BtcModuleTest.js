@@ -30,6 +30,13 @@ describe('btc', () => {
         console.log('path--->', path);
         console.log('wif--->', wif);
         console.log('address--->', address);
+
+        // 根据助记词返回私钥
+        const result = btc.genAccount(mnemonic);
+        expect(mnemonic).toStrictEqual(result.mnemonic);
+        expect(path).toStrictEqual(result.path);
+        expect(wif).toStrictEqual(result.wif);
+        expect(address).toStrictEqual(result.address);
     });
 
     it('generate multi address', () => {

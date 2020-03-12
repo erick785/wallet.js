@@ -71,6 +71,7 @@ const {mnemonic, path, wif, address} = builder.btc.genAccount();
 ```js
 /**
  * @method genAccount 根据公钥生成P2PKH地址, 支持压缩、非压缩公钥
+ * @param {String} mnemonic 助记词如果这个参数不为空，就是通过助记词恢复账户
  * @param {Number} strength 默认 128
  * 熵128 ==> 助记词12个单词
  * 熵160 ==> 助记词15个单词
@@ -248,6 +249,7 @@ const outs = [
 ```js
 /**
  * @method genAccount 生成账户
+ * @param {String} mnemonic 助记词如果这个参数不为空，就是通过助记词恢复账户
  * @param {Object} options 不写就默认
  * options.extraEntropy 额外的熵加入随机源
  * options.path 分层确定性路径，默认使用BIP44路径 "m/44'/60'/0'/0/0"
@@ -430,6 +432,7 @@ let txData = {
 ```js
 /**
  * @method genAccount 根据公钥生成P2PKH地址, 支持压缩、非压缩公钥
+ * @param {String} mnemonic 助记词如果这个参数不为空，就是通过助记词恢复账户
  * @param {Number} strength 默认 128
  * 熵128 ==> 助记词12个单词
  * 熵160 ==> 助记词15个单词
@@ -566,6 +569,7 @@ const keyPairs = [
 ```js
 /**
  * @method genAccount 根据公钥生成P2PKH地址, 支持压缩、非压缩公钥
+ * @param {String} mnemonic 助记词如果这个参数不为空，就是通过助记词恢复账户
  * @param {Number} strength 默认 128
  * 熵128 ==> 助记词12个单词
  * 熵160 ==> 助记词15个单词
