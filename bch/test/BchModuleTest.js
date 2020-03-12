@@ -1,4 +1,9 @@
 import * as functions from '../src/BchModule';
+import * as bitcoin from 'bitcoinjs-lib';
+import * as coininfo from 'coininfo';
+
+const bchcoin = coininfo.bitcoincash.main;
+const bchcoinBitcoinJsLibrary = bchcoin.toBitcoinJS();
 
 describe('bch', () => {
     let bch;
@@ -43,9 +48,13 @@ describe('bch', () => {
     });
 
     it('generate bch multi address', () => {
-        const {address, redeemscript, pubKeys} = bch.genMultiAddress(m, n, wifs);
-        // console.log('pubKeys--->', pubKeys);
-        pubs = pubKeys;
+        pubs = wifs.map(function(wif) {
+            const keyPair = bitcoin.ECPair.fromWIF(wif, bchcoinBitcoinJsLibrary);
+            return keyPair.publicKey;
+        });
+
+        const {address, redeemscript} = bch.genMultiAddress(m, n, pubs);
+
         expect(address).toStrictEqual(multiAddr);
         expect(redeemscript).toStrictEqual(multiScript);
     });
@@ -59,8 +68,11 @@ describe('bch', () => {
             {scriptPubKey: multiAddr, value: 2 * 1e4}
         ];
 
-        const txHex = bch.genTransactionAndSign(ins, outs, wifs[0]);
+        const keyPair = bitcoin.ECPair.fromWIF(wifs[0], bchcoinBitcoinJsLibrary);
 
+        const serialized = bch.genTransaction(ins, outs, keyPair.publicKey);
+
+        const txHex = bch.signTransaction(serialized, wifs[0]);
         expect(txHex).toStrictEqual(
             '01000000015e7843256283d5a80d47dc1ad1000cee97335cf9131151bfe6ac0633158a7e21010000006a47304402202cee8ad5a268a1e3402b911c73794c97f734e52385c9dad1d103f33abb0450380220162f50fae70f09eba5a29e0c11d3a554be0009a09e717ecfab967cfe20298ddd4121021ca76773fa079656753ea1c7995479eb9392278eb6de305a592730012eecea17ffffffff0240e81d00000000001976a914e8469965a8f1834062125cd2ebc7a3c32f059fe788ac204e00000000000017a91418e5175e49d9bc55aa2176fc5ea0fd8f93e803e48700000000'
         );
@@ -73,7 +85,12 @@ describe('bch', () => {
 
         const multiOuts = [{scriptPubKey: addrs[0], value: 1 * 1e4}];
 
-        const txHex = bch.genTransactionAndMultiSign(multiIns, multiOuts, multiAddr, m, pubs, [wifs[0], wifs[1]]);
+        // 构建多签交易
+        let serialized = bch.genMultiSignTx(multiIns, multiOuts, multiAddr, m, pubs);
+
+        // 轮流签名
+        serialized = bch.signTransaction(serialized, wifs[0]);
+        const txHex = bch.signTransaction(serialized, wifs[1]);
 
         expect(txHex).toStrictEqual(
             '0100000001342b3632ce989e70efbbcec5f6df141cad4a323471d51225b7bdea045fca277d01000000fdfd0000483045022100beb52a058ce142ec1366954e386b9164282ce5dd00797df2e5cddcef2a887d510220143a2348524645865bdc818a97a4bedb6ab6363bf129686851b0e00c80947412414730440220703d6fc6f0dff5931ec13f8260a42c8080ed9dc587917100b89f5bad9090661f0220587b8d3c620710e90d7c2596ba83d8a863141bfa89edde4709b9a028a75edb18414c695221021ca76773fa079656753ea1c7995479eb9392278eb6de305a592730012eecea17210232aba245b7468d8525385ab8f5267cadf10db0f0b34503f1e642849d6f7a58852102bd5c322419646ae10a01090fbf0ad52e698b0ee9c02df93566f651cdc244912553aeffffffff0110270000000000001976a914e8469965a8f1834062125cd2ebc7a3c32f059fe788ac00000000'

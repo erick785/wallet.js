@@ -87,8 +87,20 @@ describe('eth', () => {
             '0x11857321c5fba7c2101011590618166fcd145f4755c40caca85a884de3d73f52'
         ];
 
-        let ethTx = eth.genMultiSignTx(to, value, multiNonce, multiAddr, txData, privateKeys);
+        // 生成大家都需要签名的message hash
+        const signMessage = eth.genMultiSignTxPayloadSignMessage(to, value, multiNonce, multiAddr);
 
+        // 每一个用户对这个hash轮流签名,收集所有签名
+        let sigs = [];
+        for (let i = 0; i < privateKeys.length; i++) {
+            const sig = eth.signMultiSignTxPayload(signMessage, privateKeys[i]);
+            sigs.push(sig);
+        }
+
+        // 组装多签名交易
+        let ethTx = eth.genMultiSignTx(to, value, multiAddr, txData, sigs);
+
+        // 发送者签名
         const {rawTransaction, transactionHash} = eth.signTransaction(ethTx, privateKeys[0]);
 
         expect(rawTransaction).toStrictEqual(

@@ -1,4 +1,9 @@
 import * as functions from '../src/LtcModule';
+import * as bitcoin from 'bitcoinjs-lib';
+import * as coininfo from 'coininfo';
+
+const litecoin = coininfo.litecoin.main;
+const litecoinBitcoinJsLibrary = litecoin.toBitcoinJS();
 
 describe('ltc', () => {
     let ltc;
@@ -40,7 +45,12 @@ describe('ltc', () => {
     });
 
     it('generate ltc multi address', () => {
-        const {address, redeemscript} = ltc.genMultiAddress(2, 3, wifs);
+        const pubkeys = wifs.map(function(wif) {
+            const keyPair = bitcoin.ECPair.fromWIF(wif, litecoinBitcoinJsLibrary);
+            return keyPair.publicKey;
+        });
+
+        const {address, redeemscript} = ltc.genMultiAddress(2, 3, pubkeys);
         expect(address).toStrictEqual(multiAddr);
         expect(redeemscript).toStrictEqual(multiScript);
     });
@@ -87,11 +97,14 @@ describe('ltc', () => {
             {wif: wifs[1], inputIndex: 0, redeemScript: multiScript}
         ];
 
-        const txb = ltc.genTransaction(ins, outs);
+        let txb = ltc.genTransaction(ins, outs);
 
-        const txHex = ltc.multiSignTransaction(txb, keyPairs);
+        // 轮流签名
+        txb = ltc.multiSignTransaction(txb, [keyPairs[0]], false);
 
-        expect(txHex).toStrictEqual(
+        txb = ltc.multiSignTransaction(txb, [keyPairs[1]], true);
+
+        expect(txb).toStrictEqual(
             '0100000001acd6475aaa5a36433ff2de566fd86720e242b8b35fa4135daedaed3bb7a14b2901000000fdfe0000483045022100a37846068c02246b302e374066d1c9b9bb56317bcbd23a4ee517ebf1bf787e2b022067e715003822ad7cb0a7912c18de02a0710c96e80122138aca04a894f4f8164a01483045022100b42f4e152c8d40c057d678e3847824d4335dd0e8c011f77efce39162a20e9b31022003aee5c45b332609d4b807ac1269be86cca66b0cacac21263129ee4df3cc428c014c69522102f2f1da2e037f3f0da44450c47279dacdd416323136f02421628be369e5510f602102572571ca836857fdecd6e9bf58b203abb62c25b8544ba4a09a5e815783c3274d21029aa5d8dab17d7b787835e037ad1ab3b1d5d6ab1e085db120ba62f1c475a6c76c53aeffffffff01a0860100000000001976a9140881f253ea93060c9bceefce9496174d782473c788ac00000000'
         );
     });

@@ -79,16 +79,20 @@ describe('usdt', () => {
 
         const keyPairs = [
             {wif: wifs[0], inputIndex: 0, redeemScript: multiScript},
-            {wif: wifs[1], inputIndex: 0, redeemScript: multiScript},
             {wif: wifs[0], inputIndex: 1, redeemScript: multiScript},
+            {wif: wifs[1], inputIndex: 0, redeemScript: multiScript},
             {wif: wifs[1], inputIndex: 1, redeemScript: multiScript}
         ];
 
-        const txb = btc.genTransaction(multiIns, multiOuts);
+        // 构建交易
+        let txb = btc.genTransaction(multiIns, multiOuts);
 
-        const txHex = btc.multiSignTransaction(txb, keyPairs);
+        // 轮流签名第一个人
+        txb = btc.multiSignTransaction(txb, [keyPairs[0], keyPairs[1]], false);
+        // 轮流签名第二个人
+        txb = btc.multiSignTransaction(txb, [keyPairs[2], keyPairs[3]], true);
 
-        expect(txHex).toStrictEqual(
+        expect(txb).toStrictEqual(
             '0100000002321f8cc5c5cb48326bc7805a63f79d6f6a3aa246a3173aef2909ab2c519c2f0700000000fdfe0000483045022100c25d510aecc79c9febd5cf140065322b993e47b07f27e717d40707608398e40b02204d6962eacb40dc914bcbd3cbce544a0d9d4a9edf5fbb7bd09c68298915e4abfc01483045022100a9ff7ea741e1de3e468f179bda38db077f85546ce9cd4e46c98fc76ca7fbad4e0220022dbb0202c68ada2f02a88fb63f57e9f790bd0a903523b4b4ba64af4f55c9c1014c69522102c2d1fd9f2beeef8516c89fa62ad973b105773468b5d06e117e63d227aa2a051a2102ffedaa1ab2c5475ce41e0bf84419ec7fcd90a78ea9ec76a41663d38ed20bf45221024d20355b46c3a3fe9c4fb66c07394d0c38ee669e9815b5779b4124ed426a6a7053aeffffffff770db8d9d12a879def3cd08d89c1c93dbbaf4d9b4989a740ab18979cc5519a5400000000fc00473044022060985b3d66275efd0fe4d90b245c57e8b5ce1ddcc1712bb02508e5fd6864f3d0022010ce0c044805d87f57a7802c060819947c6e4d0eba7bec550e31cc3d55557abd014730440220164425751e3283983cacd76eb21ad3e730452471ebd43f33440b14747d653d2b02202ffcfdb882ecae61416c8136614049e93b953e7aeef0064b660b128d908f9e05014c69522102c2d1fd9f2beeef8516c89fa62ad973b105773468b5d06e117e63d227aa2a051a2102ffedaa1ab2c5475ce41e0bf84419ec7fcd90a78ea9ec76a41663d38ed20bf45221024d20355b46c3a3fe9c4fb66c07394d0c38ee669e9815b5779b4124ed426a6a7053aeffffffff0222020000000000001976a914ce75fbbbc90e56422e54469a51288cc539a593c188ac0000000000000000166a146f6d6e69000000000000001f000000000098968000000000'
         );
     });

@@ -46,18 +46,13 @@ export default class BtcModule {
      * @method genMultiAddress 生成多签地址和脚本
      * @param {Number} m 可支配者个数
      * @param {Number} n 所有者个数
-     * @param {Array} wifs 所有者私钥列表
+     * @param {Buffer Array} pubkeys 所有者公钥列表
      * @returns {Promise<{address, redeemscript}>}
      * address===>多签地址
      * redeemscript====>redeem脚本
      * */
 
-    genMultiAddress(m, n, wifs, network) {
-        const pubkeys = wifs.map(function(wif) {
-            const keyPair = bitcoin.ECPair.fromWIF(wif, network);
-            return keyPair.publicKey;
-        });
-
+    genMultiAddress(m, n, pubkeys, network) {
         const pubKeyHexs = pubkeys.map((s) => s.toString('hex'));
 
         const {address} = bitcoin.payments.p2sh({
@@ -75,7 +70,7 @@ export default class BtcModule {
      * @method genTransaction 构建btc交易
      * @param {Array} ins inputs
      * @param {Array} outs outputs
-     * @returns {Object} tx
+     * @returns {String} tx hex
      * */
     genTransaction(ins, outs, network) {
         let txb = new bitcoin.TransactionBuilder(network);
@@ -88,15 +83,19 @@ export default class BtcModule {
         for (let i = 0; i < outs.length; i++) {
             txb.addOutput(outs[i].scriptPubKey, outs[i].value);
         }
-        return txb;
+        return txb.buildIncomplete().toHex();
     }
+
     /**
      * @method signTransaction 对交易进行签名
-     * @param {Object} tx 函数genTransaction返回的tx
+     * @param {String} txHex 函数genTransaction返回的tx
      * @param {Array} keyPairs 私钥以及脚本
      * @returns {String} tx hex string
      * */
-    signTransaction(txb, keyPairs, network) {
+    signTransaction(txHex, keyPairs, network) {
+        const tx = bitcoin.Transaction.fromHex(txHex);
+        const txb = bitcoin.TransactionBuilder.fromTransaction(tx, network);
+
         for (let i = 0; i < keyPairs.length; i++) {
             let keyPair = bitcoin.ECPair.fromWIF(keyPairs[i].wif, network);
             txb.sign(keyPairs[i].inputIndex, keyPair);
@@ -104,13 +103,27 @@ export default class BtcModule {
         return txb.build().toHex();
     }
 
-    multiSignTransaction(txb, keyPairs, network) {
+    /**
+     * @method multiSignTransaction 对交易进行签名
+     * @param {String} txHex 函数genTransaction返回的tx
+     * @param {Array} keyPairs 私钥以及脚本
+     * @param {Boolean} finish 是否所有人都签名完毕
+     * @returns {String} tx hex string
+     * */
+    multiSignTransaction(txHex, keyPairs, finish, network) {
+        const tx = bitcoin.Transaction.fromHex(txHex);
+        const txb = bitcoin.TransactionBuilder.fromTransaction(tx, network);
+
         for (let i = 0; i < keyPairs.length; i++) {
             const keyPair = bitcoin.ECPair.fromWIF(keyPairs[i].wif, network);
             const myRedeemScript = Buffer.from(keyPairs[i].redeemScript, 'hex');
             txb.sign(keyPairs[i].inputIndex, keyPair, myRedeemScript);
         }
-        return txb.build().toHex();
+        if (finish) {
+            return txb.build().toHex();
+        } else {
+            return txb.buildIncomplete().toHex();
+        }
     }
 
     toPaddedHexString(number, length) {

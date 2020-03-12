@@ -42,6 +42,8 @@ const {mnemonic, path, wif, address} = builder.btc.genAccount();
     -   [multiAccountTx](#eth_multiAccountTx)
     -   [genTransaction](#eth_genTransaction)
     -   [signTransaction](#eth_signTransaction)
+    -   [genMultiSignTxPayloadSignMessage](#eth_genMultiSignTxPayloadSignMessage)
+    -   [signMultiSignTxPayload](#eth_signMultiSignTxPayload)
     -   [genMultiSignTx](#eth_genMultiSignTx)
 
 -   [ERC20 Interface](#ERC20)
@@ -61,8 +63,9 @@ const {mnemonic, path, wif, address} = builder.btc.genAccount();
 
     -   [genAccount](#bch_genAccount)
     -   [genMultiAddress](#bch_genMultiAddress)
-    -   [genTransactionAndSign](#bch_genTransactionAndSign)
-    -   [genTransactionAndMultiSign](#bch_genTransactionAndMultiSign)
+    -   [genTransaction](#bch_genTransaction)
+    -   [signTransaction](#bch_signTransaction)
+    -   [genMultiSignTx](#bch_genMultiSignTx)
 
 ### BTC
 
@@ -100,7 +103,7 @@ const {mnemonic, path, wif, address} = builder.btc.genAccount();
  * @method genMultiAddress 生成多签地址和脚本
  * @param {Number} m 可支配者个数
  * @param {Number} n 所有者个数
- * @param {Array} wifs 所有者私钥列表
+ * @param {Buffer Array} pubkeys 所有者公钥列表
  * @returns {Promise<{address, redeemscript}>}
  * address===>多签地址
  * redeemscript====>redeem脚本 多重签名地址的赎回脚本
@@ -120,7 +123,7 @@ const {mnemonic, path, wif, address} = builder.btc.genAccount();
  * @method genTransaction 构建btc交易
  * @param {Array} ins inputs
  * @param {Array} outs outputs
- * @returns {Object} tx
+ * @returns {String} tx hex
  * */
 
 const ins = [
@@ -153,7 +156,7 @@ const outs = [
 ```js
 /**
  * @method signTransaction 对交易进行单签名
- * @param {Object} tx 函数genTransaction返回的tx
+ * @param {String} txHex 函数genTransaction返回的tx
  * @param {Array} keyPairs 私钥以及脚本
  * @returns {String} tx hex string
  * */
@@ -179,8 +182,9 @@ const keyPairs = [
 ```js
 /**
  * @method multiSignTransaction 对交易进行多重签名
- * @param {Object} tx 函数genTransaction返回的tx
+ * @param {String} txHex 函数genTransaction返回的tx
  * @param {Array} keyPairs 私钥以及脚本
+ * @param {Boolean} finish 是否所有人都签名完毕，false 否，true 是
  * @returns {String} tx hex string
  * */
 
@@ -341,6 +345,47 @@ const txData = {
 
 ---
 
+#### eth_genMultiSignTxPayloadSignMessage
+
+```js
+/**
+ * @method genMultiSignTxPayloadSignMessage 生成多签messageHash
+ * @param {String} to 收款地址
+ * @param {Number} value 多种签名转账金额
+ * @param {Number} multiNonce 多重签名地址支付Nonce
+ * @param {String} multiAddr 收款地址
+ * @returns {String} message hash
+ * */
+```
+
+#### example
+
+看第三个测试 [generate multi sign transaction](https://github.com/erick785/wallet.js/blob/master/eth/test/EthModuleTest.js)
+
+---
+
+#### eth_signMultiSignTxPayload
+
+```js
+/**
+ * @method signMultiSignTxPayload 对生成的多签messageHash签名
+ * @param {String} message hash
+ * @param {String} privateKey 私钥
+ * @returns {Object} sig 签名
+ * {
+ *    v :number
+ *    r :buffer
+ *    s :buffer
+ * }
+ * */
+```
+
+#### example
+
+看第三个测试 [generate multi sign transaction](https://github.com/erick785/wallet.js/blob/master/eth/test/EthModuleTest.js)
+
+---
+
 #### eth_genMultiSignTx
 
 ```js
@@ -348,11 +393,10 @@ const txData = {
  * @method genMultiSignTx 对支付进行多重签名
  * @param {String} to 收款地址
  * @param {Number} value 多种签名转账金额
- * @param {Number} multiNonce 多重签名地址支付Nonce
  * @param {String} multiAddr 收款地址
  * @param {Object} txData 一个交易的基础内容
- * @param {Array} privateKeys
- * @returns {Object} tx transaction 多重签名后的交易
+ * @param {Object Array} sigs 签名
+ * @returns {Object} transaction 多重签名后的交易
  */
 
 const txData = {
@@ -403,11 +447,10 @@ const txData = {
 /**
  * @method genERC20MultiSignTx 对erc20支付进行多重签名
  * @param {String} to 收款地址
- * @param {Number} multiNonce 多重签名地址支付Nonce
  * @param {String} multiAddress 收款地址
  * @param {String} tokenAddress erc20合约地址
  * @param {Object} txData 一个交易的基础内容
- * @param {Array} privateKeys
+ * @param {Array} sigs 签名
  * @returns {Object} transaction 多重签名后的交易
  */
 
@@ -461,7 +504,7 @@ let txData = {
  * @method genMultiAddress 生成多签地址和脚本
  * @param {Number} m 可支配者个数
  * @param {Number} n 所有者个数
- * @param {Array} wifs 所有者私钥列表
+ * @param {Buffer Array} pubkeys 所有者公钥列表
  * @returns {Promise<{address, redeemscript}>}
  * address===>多签地址
  * redeemscript====>redeem脚本 多重签名地址的赎回脚本
@@ -542,6 +585,7 @@ const keyPairs = [
  * @method multiSignTransaction 对交易进行多重签名
  * @param {Object} tx 函数genTransaction返回的tx
  * @param {Array} keyPairs 私钥以及脚本
+ * @param {Boolean} finish 是否完成签名
  * @returns {String} tx hex string
  * */
 
@@ -598,7 +642,7 @@ const keyPairs = [
  * @method genMultiAddress 生成多签地址和脚本
  * @param {Number} m 可支配者个数
  * @param {Number} n 所有者个数
- * @param {Array} wifs 所有者私钥列表
+ * @param {Buffer Array} pubKeys 所有者公钥列表
  * @returns {Promise<{address, redeemscript}>}
  * address===>多签地址
  * redeemscript====>redeem脚本 多重签名地址的赎回脚本
@@ -611,17 +655,16 @@ const keyPairs = [
 
 ---
 
-#### bch_genTransactionAndSign
+#### bch_genTransaction
 
 ```js
-/**
- * @method genTransactionAndSign 构建bch交易并签名
- * @param {Array} ins inputs
- * @param {Array} outs outputs
- * @param {String} wif 私钥
- * @returns {Object} tx
- * */
-
+  /**
+     * @method genTransaction 构建bch交易
+     * @param {Array} ins inputs
+     * @param {Array} outs outputs
+     * @param {String} publicKey 公钥
+     * @returns {String} tx object
+     * */
 
 const ins = [
     {
@@ -650,16 +693,33 @@ const outs = [
 
 ---
 
-#### bch_genTransactionAndMultiSign
+#### bch_signTransaction
 
 ```js
 /**
- * @method genTransactionAndSign 构建bch交易并签名
+ * @method signTransaction 签名交易
+ * @param {String} serialized 可支配者个数
+ * @param {String} wif 私钥
+ * @returns {String} tx hex
+ * */
+```
+
+#### Example
+
+看第三个测试 [generate bch transaction and sign](https://github.com/erick785/wallet.js/blob/master/bch/test/BchModuleTest.js)
+
+---
+
+#### bch_genMultiSignTx
+
+```js
+/**
+ * @method genMultiSignTx 构建bch交易
  * @param {Array} ins inputs
  * @param {Array} outs outputs
  * @param {String} multiAddr 多签地址
  * @param {Number} m 可支配者个数
- * @param {Array} wifs 签名
+ * @param {Array Buffer} pubKeys 所有人公钥
  * @returns {String} tx hex
  * */
 ```

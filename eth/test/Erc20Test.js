@@ -20,7 +20,7 @@ describe('usdt', () => {
         const value = '100000000000000000000';
         const privateKey = '0xe441324e86450e148d4884dff4148bf4b881568e4bb1dd079a8fca4cf75a89cc';
 
-        let ethTx = eth.getErc20Transaction(txData, to, value);
+        let ethTx = eth.genErc20Transaction(txData, to, value);
 
         const {rawTransaction, transactionHash} = eth.signTransaction(ethTx, privateKey);
 
@@ -65,8 +65,20 @@ describe('usdt', () => {
         const value = '1000000000000000000';
         const token = '0xE86fdcC4A93c476B8BbC03a80868fa42F6c9919E';
 
-        let ethTx = eth.genERC20MultiSignTx(to, value, multiNonce, multiAddr, token, txData, privateKeys);
+        // 生成大家都需要签名的message hash
+        const signMessage = eth.genMultiSignTxPayloadSignMessage(to, value, multiNonce, multiAddr);
 
+        // 每一个用户对这个hash轮流签名
+        let sigs = [];
+        for (let i = 0; i < privateKeys.length; i++) {
+            const sig = eth.signMultiSignTxPayload(signMessage, privateKeys[i]);
+            sigs.push(sig);
+        }
+
+        // 组装erc20多签名交易
+        let ethTx = eth.genERC20MultiSignTx(to, value, multiAddr, token, txData, sigs);
+
+        // 发送者签名rc20多签名交易
         const {rawTransaction, transactionHash} = eth.signTransaction(ethTx, privateKeys[0]);
 
         expect(rawTransaction).toStrictEqual(

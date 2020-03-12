@@ -1,4 +1,5 @@
 import * as functions from '../src/BtcModule';
+import * as bitcoin from 'bitcoinjs-lib';
 
 describe('btc', () => {
     let btc;
@@ -40,7 +41,12 @@ describe('btc', () => {
     });
 
     it('generate multi address', () => {
-        const {address, redeemscript} = btc.genMultiAddress(2, 3, wifs);
+        const pubkeys = wifs.map(function(wif) {
+            const keyPair = bitcoin.ECPair.fromWIF(wif);
+            return keyPair.publicKey;
+        });
+
+        const {address, redeemscript} = btc.genMultiAddress(2, 3, pubkeys);
 
         expect(address).toStrictEqual(multiAddr);
         expect(redeemscript).toStrictEqual(multiScript);
@@ -121,11 +127,15 @@ describe('btc', () => {
             {wif: wifs[1], inputIndex: 0, redeemScript: multiScript}
         ];
 
-        const txb = btc.genTransaction(multiIns, multiOuts);
+        // 构建交易
+        let txb = btc.genTransaction(multiIns, multiOuts);
 
-        const txHex = btc.multiSignTransaction(txb, keyPairs);
+        // 轮流签名
+        txb = btc.multiSignTransaction(txb, [keyPairs[0]], false);
 
-        expect(txHex).toStrictEqual(
+        txb = btc.multiSignTransaction(txb, [keyPairs[1]], true);
+
+        expect(txb).toStrictEqual(
             '010000000141460451590e6b7f3b30164f92ed983bcf8e775c5cd4c283c1de5b016a5603b603000000fdfe0000483045022100c6ebb48641a6cf15a2a5a66098d1ad965e129fe2aaa925c8ed168baa7aced404022056da1dd06e129500df46b981112827dcd9252acb09430d24c14a189eaf587c6f01483045022100b568e635747346ceb2e183d98bcaabf8738bc8f5e996bfc117f5735cb7b523b602205f0265a5b3f084342469ea0f077cdf345cfbd2fe2ee6a84f593349ee760fc288014c69522102c2d1fd9f2beeef8516c89fa62ad973b105773468b5d06e117e63d227aa2a051a2102ffedaa1ab2c5475ce41e0bf84419ec7fcd90a78ea9ec76a41663d38ed20bf45221024d20355b46c3a3fe9c4fb66c07394d0c38ee669e9815b5779b4124ed426a6a7053aeffffffff0400ca9a3b000000001976a914ce75fbbbc90e56422e54469a51288cc539a593c188ac00ca9a3b000000001976a914093b51a2d6fdd7c9009a4e9a261f2f8adaab38f988ac00ca9a3b000000001976a9142ee122fd3d6b6fa9ed6650a37d3e3b9dc295d3e488acf05e3ba10100000017a914898d581c9e0fb73e7dd0ca4e8daec6d6c26486f98700000000'
         );
     });

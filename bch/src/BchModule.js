@@ -52,35 +52,45 @@ export default class BchModule extends BtcModule {
      * @method genMultiAddress 生成多签地址和脚本
      * @param {Number} m 可支配者个数
      * @param {Number} n 所有者个数
-     * @param {Array} wifs 所有者私钥列表
+     * @param {Buffer Array} pubKeys 所有者公钥列表
      * @returns {Promise<{address, redeemscript}>}
      * address===>多签地址
      * redeemscript====>redeem脚本 多重签名地址的赎回脚本
      * */
-    genMultiAddress(m, n, wifs) {
-        let pubKeys = [];
+    genMultiAddress(m, n, pubKeys) {
+        const {address, redeemscript} = super.genMultiAddress(m, n, pubKeys, bchcoinBitcoinJsLibrary);
 
-        for (let i = 0; i < wifs.length; i++) {
-            pubKeys.push(bitcoincash.PrivateKey.fromWIF(wifs[i]).toPublicKey());
-        }
-
-        const {address, redeemscript} = super.genMultiAddress(m, n, wifs, bchcoinBitcoinJsLibrary);
-
-        return {address, redeemscript, pubKeys};
+        return {address, redeemscript};
     }
 
     /**
-     * @method genTransactionAndSign 构建bch交易并签名
-     * @param {Array} ins inputs
-     * @param {Array} outs outputs
+     * @method signTransaction 签名交易
+     * @param {String} serialized 可支配者个数
      * @param {String} wif 私钥
      * @returns {String} tx hex
      * */
-    genTransactionAndSign(ins, outs, wif) {
+
+    signTransaction(serialized, wif) {
+        const transaction = new bitcoincash.Transaction(serialized).sign(wif);
+
+        if (transaction.isFullySigned()) {
+            return transaction.uncheckedSerialize();
+        } else {
+            return transaction.toObject();
+        }
+    }
+
+    /**
+     * @method genTransaction 构建bch交易
+     * @param {Array} ins inputs
+     * @param {Array} outs outputs
+     * @param {String} publicKey 公钥
+     * @returns {String} tx object
+     * */
+    genTransaction(ins, outs, publicKey) {
         let utxos = [];
         let tos = [];
-        const keyPair = bitcoin.ECPair.fromWIF(wif, bchcoinBitcoinJsLibrary);
-        const payments = bitcoin.payments.p2pkh({pubkey: keyPair.publicKey, network: bchcoinBitcoinJsLibrary});
+        const payments = bitcoin.payments.p2pkh({pubkey: publicKey, network: bchcoinBitcoinJsLibrary});
 
         const s = bitcoin.address.toOutputScript(payments.address, bchcoinBitcoinJsLibrary).toString('hex');
 
@@ -98,23 +108,23 @@ export default class BchModule extends BtcModule {
             tos.push({address: addr, satoshis: outs[i].value});
         }
 
-        const transaction = new bitcoincash.Transaction()
-            .from(utxos)
-            .to(tos)
-            .sign(wif);
-        return transaction.uncheckedSerialize();
+        const transaction = new bitcoincash.Transaction().from(utxos).to(tos);
+
+        return transaction.toObject();
     }
 
     /**
-     * @method genTransactionAndSign 构建bch交易并签名
+     * @method genMultiSignTx 构建bch交易
      * @param {Array} ins inputs
      * @param {Array} outs outputs
      * @param {String} multiAddr 多签地址
      * @param {Number} m 可支配者个数
-     * @param {Array} wifs 签名
+     * @param {Array Buffer} pubKeys 所有人公钥
      * @returns {String} tx hex
      * */
-    genTransactionAndMultiSign(ins, outs, multiAddr, m, pubKeys, wifs) {
+    genMultiSignTx(ins, outs, multiAddr, m, pubKeys) {
+        const pubKeyHexs = pubKeys.map((s) => s.toString('hex'));
+
         let utxos = [];
         let tos = [];
 
@@ -134,12 +144,9 @@ export default class BchModule extends BtcModule {
             tos.push({address: addr, satoshis: outs[i].value});
         }
 
-        const transaction = new bitcoincash.Transaction()
-            .from(utxos, pubKeys, m)
-            .to(tos)
-            .sign(wifs);
+        const transaction = new bitcoincash.Transaction().from(utxos, pubKeyHexs, m).to(tos);
 
-        return transaction.uncheckedSerialize();
+        return transaction.toObject();
     }
 }
 

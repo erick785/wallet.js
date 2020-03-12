@@ -128,7 +128,7 @@ export default class EthMethod {
      * };
      * ```
      */
-    getErc20Transaction(txdata, to, value) {
+    genErc20Transaction(txdata, to, value) {
         txdata.data = '0x' + this.getContractPayload('transfer', ['address', 'uint256'], [to, value]);
         const ethTx = this.genTransaction(txdata);
         return ethTx;
@@ -169,26 +169,64 @@ export default class EthMethod {
     }
 
     /**
-     * @method genMultiSignTx 对支付进行多重签名
+     * @method genMultiSignTxPayloadSignMessage 生成多签messageHash
      * @param {String} to 收款地址
      * @param {Number} value 多种签名转账金额
      * @param {Number} multiNonce 多重签名地址支付Nonce
      * @param {String} multiAddr 收款地址
-     * @param {Object} txData 一个交易的基础内容
-     * @param {Array} privateKeys
-     * @returns {Object} transaction 多重签名后的交易
-     */
-    genMultiSignTx(to, value, multiNonce, multiAddr, txData, privateKeys) {
-        txData.to = multiAddr;
-        const ethTx = this.genTransaction(txData);
-
-        const message = abi.rawEncode(['uint256', 'address', 'uint256', 'address'], [multiNonce, multiAddr, value, to]);
+     * @returns {String} message hash
+     * */
+    genMultiSignTxPayloadSignMessage(to, value, multiNonce, multiAddress) {
+        const message = abi.rawEncode(
+            ['uint256', 'address', 'uint256', 'address'],
+            [multiNonce, multiAddress, value, to]
+        );
 
         const messageHash = utils.keccak256('0x' + message.toString('hex'));
 
         const signmsg = utils.keccak256(
             utils.toHex('\u0019Ethereum Signed Message:\n' + 32) + messageHash.substring(2)
         );
+
+        return signmsg;
+    }
+
+    /**
+     * @method signMultiSignTxPayload 对生成的多签messageHash签名
+     * @param {String} message hash
+     * @param {String} privateKey 私钥
+     * @returns {Object} sig 签名
+     * {
+     *    v :number
+     *    r :buffer
+     *    s :buffer
+     * }
+     * */
+    signMultiSignTxPayload(signmsg, privateKey) {
+        if (privateKey.startsWith('0x')) {
+            privateKey = privateKey.substring(2);
+        }
+
+        if (signmsg.startsWith('0x')) {
+            signmsg = signmsg.substring(2);
+        }
+
+        return ecsign(Buffer.from(signmsg, 'hex'), Buffer.from(privateKey, 'hex'));
+    }
+
+    /**
+     * @method genMultiSignTx 对支付进行多重签名
+     * @param {String} to 收款地址
+     * @param {Number} value 多种签名转账金额
+     * @param {String} multiAddr 收款地址
+     * @param {Object} txData 一个交易的基础内容
+     * @param {Object Array} sigs 签名
+     * @returns {Object} transaction 多重签名后的交易
+     */
+    genMultiSignTx(to, value, multiAddr, txData, sigs) {
+        txData.to = multiAddr;
+        const ethTx = this.genTransaction(txData);
+
         // console.log('----msg', message.toString('hex'));
         // console.log('---messageHash', messageHash);
         // console.log('---signmsg', signmsg);
@@ -197,15 +235,10 @@ export default class EthMethod {
         let r = [];
         let s = [];
 
-        for (let i = 0; i < privateKeys.length; i++) {
-            if (privateKeys[i].startsWith('0x')) {
-                const pkey = privateKeys[i].substring(2);
-                const sig = ecsign(Buffer.from(signmsg.substring(2), 'hex'), Buffer.from(pkey, 'hex'));
-
-                v.push(sig.v - 27);
-                r.push(sig.r);
-                s.push(sig.s);
-            }
+        for (let i = 0; i < sigs.length; i++) {
+            v.push(sigs[i].v - 27);
+            r.push(sigs[i].r);
+            s.push(sigs[i].s);
         }
 
         // console.log('---v', v);
@@ -226,42 +259,25 @@ export default class EthMethod {
     /**
      * @method genERC20MultiSignTx 对erc20支付进行多重签名
      * @param {String} to 收款地址
-     * @param {Number} multiNonce 多重签名地址支付Nonce
      * @param {String} multiAddress 收款地址
      * @param {String} tokenAddress erc20合约地址
      * @param {Object} txData 一个交易的基础内容
-     * @param {Array} privateKeys
+     * @param {Array} sigs 签名
      * @returns {Object} transaction 多重签名后的交易
      */
 
-    genERC20MultiSignTx(to, value, multiNonce, multiAddress, tokenAddress, txData, privateKeys) {
+    genERC20MultiSignTx(to, value, multiAddress, tokenAddress, txData, sigs) {
         txData.to = multiAddress;
         const ethTx = this.genTransaction(txData);
-
-        const message = abi.rawEncode(
-            ['uint256', 'address', 'uint256', 'address'],
-            [multiNonce, multiAddress, value, to]
-        );
-
-        const messageHash = utils.keccak256('0x' + message.toString('hex'));
-
-        const signmsg = utils.keccak256(
-            utils.toHex('\u0019Ethereum Signed Message:\n' + 32) + messageHash.substring(2)
-        );
 
         let v = [];
         let r = [];
         let s = [];
 
-        for (let i = 0; i < privateKeys.length; i++) {
-            if (privateKeys[i].startsWith('0x')) {
-                const pkey = privateKeys[i].substring(2);
-                const sig = ecsign(Buffer.from(signmsg.substring(2), 'hex'), Buffer.from(pkey, 'hex'));
-
-                v.push(sig.v - 27);
-                r.push(sig.r);
-                s.push(sig.s);
-            }
+        for (let i = 0; i < sigs.length; i++) {
+            v.push(sigs[i].v - 27);
+            r.push(sigs[i].r);
+            s.push(sigs[i].s);
         }
 
         ethTx.data =

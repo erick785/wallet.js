@@ -50,13 +50,13 @@ export default class LtcModule extends BtcModule {
      * @method genMultiAddress 生成多签地址和脚本
      * @param {Number} m 可支配者个数
      * @param {Number} n 所有者个数
-     * @param {Array} wifs 所有者私钥列表
+     * @param {Buffer Array} pubkeys 所有者公钥列表
      * @returns {Promise<{address, redeemscript}>}
      * address===>多签地址
      * redeemscript====>redeem脚本 多重签名地址的赎回脚本
      * */
-    genMultiAddress(m, n, wifs) {
-        return super.genMultiAddress(m, n, wifs, litecoinBitcoinJsLibrary);
+    genMultiAddress(m, n, pubkeys) {
+        return super.genMultiAddress(m, n, pubkeys, litecoinBitcoinJsLibrary);
     }
     /**
      * @method genTransaction 构建btc交易
@@ -82,10 +82,11 @@ export default class LtcModule extends BtcModule {
      * @method multiSignTransaction 对交易进行多重签名
      * @param {Object} tx 函数genTransaction返回的tx
      * @param {Array} keyPairs 私钥以及脚本
+     * @param {Boolean} finish 是否完成签名
      * @returns {String} tx hex string
      * */
-    multiSignTransaction(txb, keyPairs) {
-        return super.multiSignTransaction(txb, keyPairs, litecoinBitcoinJsLibrary);
+    multiSignTransaction(txb, keyPairs, finish) {
+        return super.multiSignTransaction(txb, keyPairs, finish, litecoinBitcoinJsLibrary);
     }
 }
 
