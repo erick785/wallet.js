@@ -119,12 +119,12 @@ export default class EthMethod {
      * @returns {Object} tx 返回交易
      * @example
      * ```js
-     * const txData = {
-     *   nonce: '0x00',
-     *   gasPrice: '0x09184e72a000',
-     *   gasLimit: '0x2710',
-     *   value: '0x00',
-     *   data: '0x7f7465737432000000000000000000000000000000000000000000000000000000600057',
+     *  const txData = {
+     *       nonce: '0x01',
+     *       gasPrice: '0x2540be400',
+     *      gasLimit: '0x15f90',
+     *      value: '0x0',
+     *     to: '0xe86fdcc4a93c476b8bbc03a80868fa42f6c9919e' //合约的地址
      * };
      * ```
      */

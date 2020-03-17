@@ -428,10 +428,11 @@ const txData = {
  */
 
 const txData = {
-    nonce: '0x00',
-    gasPrice: '0x09184e72a000',
-    gasLimit: '0x2710',
-    value: '0x00' //这个value指的是交易eth转账的value，不是代币的
+    nonce: '0x01',
+    gasPrice: '0x2540be400',
+    gasLimit: '0x15f90',
+    value: '0x0', //这个value指的是交易eth转账的value，不是代币的
+    to: '0xe86fdcc4a93c476b8bbc03a80868fa42f6c9919e' //erc20合约的地址
 };
 ```
 
