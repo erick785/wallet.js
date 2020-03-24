@@ -17,10 +17,11 @@ export default class BtcModule {
      * 熵224 ==> 助记词21个单词
      * 熵256 ==> 助记词24个单词
      * @param {String} path 分层确定性路径，默认使用BIP44路径 "m/44'/0'/0'/0/0"
-     * @returns {Promise<{mnemonic, path, wif, address}>}
+     * @returns {Promise<{mnemonic, path, wif, publicKey,address}>}
      * mnemonic 助记词
      * path 路径
      * wif 秘钥
+     * publicKey 公钥
      * address 地址
      */
 
@@ -36,10 +37,11 @@ export default class BtcModule {
         const root = bip32.fromSeed(seed);
         const child = root.derivePath(path);
         const privateKey = child.privateKey;
+        const publicKey = child.publicKey;
         const {address} = bitcoin.payments.p2pkh({pubkey: child.publicKey});
         const wif = bitcoin.ECPair.fromPrivateKey(privateKey).toWIF();
 
-        return {mnemonic, path, wif, address};
+        return {mnemonic, path, wif, publicKey, address};
     }
 
     /**

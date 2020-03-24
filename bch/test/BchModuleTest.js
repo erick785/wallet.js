@@ -32,11 +32,12 @@ describe('bch', () => {
     });
 
     it('generate bch account', () => {
-        const {mnemonic, path, wif, address} = bch.genAccount();
+        const {mnemonic, path, wif, publicKey, address} = bch.genAccount();
 
         console.log('mnemonic--->', mnemonic);
         console.log('path--->', path);
         console.log('wif--->', wif);
+        console.log('publicKey--->', publicKey);
         console.log('address--->', address);
 
         // 根据助记词返回私钥
@@ -44,6 +45,7 @@ describe('bch', () => {
         expect(mnemonic).toStrictEqual(result.mnemonic);
         expect(path).toStrictEqual(result.path);
         expect(wif).toStrictEqual(result.wif);
+        expect(publicKey).toStrictEqual(result.publicKey);
         expect(address).toStrictEqual(result.address);
     });
 

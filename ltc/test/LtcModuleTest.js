@@ -29,11 +29,12 @@ describe('ltc', () => {
     });
 
     it('generate ltc account', () => {
-        const {mnemonic, path, wif, address} = ltc.genAccount();
+        const {mnemonic, path, wif, publicKey, address} = ltc.genAccount();
 
         console.log('mnemonic--->', mnemonic);
         console.log('path--->', path);
         console.log('wif--->', wif);
+        console.log('publicKey--->', publicKey);
         console.log('address--->', address);
 
         // 根据助记词返回私钥
@@ -41,6 +42,7 @@ describe('ltc', () => {
         expect(mnemonic).toStrictEqual(result.mnemonic);
         expect(path).toStrictEqual(result.path);
         expect(wif).toStrictEqual(result.wif);
+        expect(publicKey).toStrictEqual(result.publicKey);
         expect(address).toStrictEqual(result.address);
     });
 
