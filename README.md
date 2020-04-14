@@ -372,12 +372,7 @@ const txData = {
  * @method signMultiSignTxPayload 对生成的多签messageHash签名
  * @param {String} message hash
  * @param {String} privateKey 私钥
- * @returns {Object} sig 签名
- * {
- *    v :number
- *    r :buffer
- *    s :buffer
- * }
+ * @returns {Object} sig 签名 hex
  * */
 ```
 

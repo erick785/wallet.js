@@ -77,10 +77,10 @@ describe('eth', () => {
             gasLimit: '0xdbba0',
             value: '0x0'
         };
-        const multiNonce = 0;
+        const multiNonce = '0x0';
         const to = '0x167256c6aF0aB356964E02d1C0aeB954327aE7bD';
         const multiAddr = '0x0537ec3e1ecd5f48d024028c3346f54461f6b8c4';
-        const value = '1000000000000000000';
+        const value = '0xde0b6b3a7640000';
         const privateKeys = [
             '0xe441324e86450e148d4884dff4148bf4b881568e4bb1dd079a8fca4cf75a89cc',
             '0x36de9937f678c2d00c0c24070b301ac4ddd00bd06913da3a02608965097a72ac',
